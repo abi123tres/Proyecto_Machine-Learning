@@ -10,9 +10,10 @@
 únicamente información disponible al momento de la decisión crediticia.**
 
 ## 2. Integrantes
-- ⟨Nombre 1⟩
-- ⟨Nombre 2⟩
-- ⟨Nombre 3⟩
+- Abigail Jaslin Cabanillas Ventocilla | 202510438 
+- Mia Alexie Wood De la fuente chavez | 202410085
+-
+-
 
 *(Reemplazar por los integrantes reales del equipo.)*
 
