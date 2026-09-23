@@ -12,7 +12,7 @@
 ## 2. Integrantes
 - Abigail Jaslin Cabanillas Ventocilla | 202510438 
 - Mia Alexie Wood De la fuente chavez | 202410085
--
+- Mia Dayhana Hurtado Vite | 202410245
 -
 
 *(Reemplazar por los integrantes reales del equipo.)*
