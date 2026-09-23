@@ -1,151 +1,146 @@
-# 1. Título del proyecto
+# Propuesta de proyecto — Entrega previa
 
-["Predicción de riesgo crediticio (default) en préstamos peer-to-peer con datos de Lending Club"]
+> **Nota:** Las cifras (filas, tasa de default, métricas del baseline) provienen
+> de una corrida real sobre una muestra aleatoria del 40% del dataset, ejecutada
+> en `notebooks/01_exploracion_inicial.ipynb` y guardada en `outputs/metrics.json`.
+> Falta completar los **nombres de los integrantes** (punto 2).
 
-# 2. Integrantes
+## 1. Título del proyecto
+**Predicción de incumplimiento de préstamos personales en Lending Club usando
+únicamente información disponible al momento de la decisión crediticia.**
 
-| Nombre | Código UTEC | Rol principal |
-|--------|-------------|---------------|
-| Abigail Jaslin Cabanillas Ventocilla | 202510438 | |
-| | | |
-| | | |
+## 2. Integrantes
+- Abigail Jaslin Cabanillas Ventocilla | 202510438 
+- Mia Alexie Wood De la fuente chavez | 202410085
+- 
+- 
+*(Reemplazar por los integrantes reales del equipo.)*
 
-# 3. Dataset elegido
+## 3. Dataset elegido
+**Lending Club Loan Data** — préstamos personales originados entre 2007 y 2018.
 
-- **Nombre:** Lending Club Loan Data
-- **Fuente:** Kaggle / Lending Club — https://www.kaggle.com/datasets/wordsforthewise/lending-club
-- **Formato:** CSV, un archivo consolidado con múltiples años de originación de préstamos
-- **Licencia / acceso:** datos públicos vía Kaggle, descarga libre
-- **Periodo usado:** [2007–2018, dataset completo sin muestreo]
-- **Tamaño:** [filas: 2,260,701,  columnas: 24]
-- **Por qué es complejo:** dataset de gran volumen con más de dos millones de registros, variables con riesgo real de leakage temporal a través de pagos y recuperaciones registrados después del desembolso, un componente 
-temporal de más de una década que exige split no aleatorio, y variables con muchas categorías distintas.
+- **Fuente:** Lending Club, distribuida vía Kaggle
+  (`wordsforthewise/lending-club`, archivo `accepted_2007_to_2018Q4.csv`).
+- **Tamaño:** 2 260 701 préstamos y 151 columnas en el archivo completo. Para la
+  exploración inicial se trabajó con una **muestra aleatoria reproducible del
+  40%**; tras filtrar a préstamos con resultado observado quedan **547 578
+  préstamos** (442 948 train / 104 630 validación out-of-time).
+- **Licencia / acceso:** datos públicos publicados por Lending Club; el mirror
+  de Kaggle requiere una cuenta gratuita. No hay restricciones de uso académico.
+- **Complejidad (por qué califica):** cumple varias de las condiciones exigidas
+  — >50 000 filas, >50 variables, variables temporales (fechas de emisión y de
+  historial crediticio), fuerte **desbalance de clases**, abundantes **valores
+  faltantes**, columnas de texto libre de alta cardinalidad (`emp_title`,
+  `title`) y un **riesgo de leakage severo y realista** que es el corazón del
+  ejercicio.
 
----
+## 4. Pregunta predictiva
+Dado un solicitante y las condiciones del préstamo **en el momento en que
+Lending Club debe decidir si aprueba y a qué tasa**, ¿el préstamo terminará en
+**incumplimiento / mal desempeño** (Charged Off, Default, mora tardía) en lugar
+de ser pagado por completo?
 
-# 4. Pregunta predictiva
+Es un problema de **clasificación binaria supervisada**.
 
-¿Se puede predecir, al momento de la aprobación del préstamo, si un solicitante caerá en default o tendrá un mal desempeño de pago, usando únicamente la información disponible antes del desembolso?
+## 5. Variable objetivo
+`target_default` ∈ {0, 1}, derivada de `loan_status`:
 
-**Motivación:** estimar el riesgo crediticio de un solicitante ayudaría a mejorar las decisiones de aprobación y a fijar tasas de interés más justas según el riesgo real.
+- **1 (evento positivo, "malo"):** `Charged Off`, `Default`,
+  `Late (31-120 days)` y sus variantes "Does not meet the credit policy…".
+- **0 ("bueno"):** `Fully Paid` y su variante de política.
+- **Excluidos:** `Current`, `In Grace Period`, `Late (16-30 days)`, `Issued` —
+  su resultado **aún no es observable**, por lo que etiquetarlos sería incorrecto.
 
----
+## 6. Unidad de predicción
+**Un préstamo individual** en el instante de su solicitud/originación. Cada fila
+= un préstamo. La predicción es la probabilidad de incumplimiento de ese
+préstamo a lo largo de su vida.
 
-# 5. Variable objetivo
+## 7. Variables disponibles antes de la predicción
+Solo se usan variables conocidas en la **originación** (lista blanca en
+`src/features.py`). Ejemplos:
 
-- **Nombre:** `mal_desempeno` (binaria, derivada de `loan_status`)
-- **Definición:**
-  - **1 (mal desempeño):** Charged Off, Default, Late (31–120 days), Does not meet the credit policy - Charged Off
-  - **0 (buen desempeño):** Fully Paid, Current, Does not meet the credit policy - Fully Paid
-- **Tipo de problema:** clasificación binaria
-- **Filtros aplicados al objetivo:** se excluyen préstamos con estados ambiguos o muy recientes (ej. "In Grace Period", "Issued") para evitar ruido en el label
+- **Solicitud/préstamo:** `loan_amnt`, `term`, `int_rate`, `installment`,
+  `grade`, `sub_grade`, `purpose`, `application_type`, `initial_list_status`.
+- **Solicitante:** `annual_inc`, `emp_length`, `home_ownership`,
+  `verification_status`, `addr_state`, `dti`.
+- **Historial de buró al originar:** `fico_range_low/high`, `delinq_2yrs`,
+  `inq_last_6mths`, `open_acc`, `pub_rec`, `revol_bal`, `revol_util`,
+  `total_acc`, `pub_rec_bankruptcies`, `earliest_cr_line`
+  (→ antigüedad crediticia).
 
----
+`int_rate`, `grade` y `sub_grade` **sí** son válidas: Lending Club las asigna en
+la originación, antes de fondear, por lo que están disponibles en la decisión.
 
-# 6. Unidad de predicción
+## 8. Riesgos de leakage
+Es el riesgo dominante de este dataset. Muchas columnas se generan **después**
+de otorgar el crédito y filtrarían el resultado:
 
-Un préstamo individual (`id` / `member_id`), predicho en el instante de su originación/aprobación.
+- **Pagos y saldos vivos:** `total_pymnt`, `total_rec_prncp`, `total_rec_int`,
+  `out_prncp`, `last_pymnt_d`, `last_pymnt_amnt`, `next_pymnt_d`.
+- **Recuperaciones tras el default:** `recoveries`, `collection_recovery_fee`.
+- **Buró actualizado durante la vida del préstamo:** `last_fico_range_high/low`,
+  `last_credit_pull_d`.
+- **Acuerdos de liquidación / hardship:** `debt_settlement_flag`,
+  `settlement_*`, `hardship_*` (solo existen si el préstamo ya se deterioró).
+- **Fondeo:** `funded_amnt`, `funded_amnt_inv` (posteriores a la aprobación; se
+  usa `loan_amnt` en su lugar).
 
----
+**Control:** lista blanca explícita de features de originación + lista negra
+documentada (`LEAKAGE_COLUMNS`). Toda imputación/escalado se ajusta **solo con
+train** dentro de un `Pipeline`.
 
-# 7. Variables disponibles antes de la predicción
+## 9. Métrica principal y métrica secundaria
+- **Principal: ROC-AUC** — mide la capacidad de ordenar solicitantes por riesgo,
+  robusta al desbalance y al umbral. Estándar en scoring crediticio.
+- **Secundarias: PR-AUC (average precision)** y **estadístico KS**, ambas
+  sensibles al desempeño sobre la clase minoritaria (los malos), más
+  informativas que accuracy. Se reportan además precision/recall a un umbral
+  operativo. **No** se usará accuracy como métrica principal (penalizado).
 
-| Variable | Descripción | ¿Disponible al predecir? |
-|----------|-------------|--------------------------|
-| `loan_amnt` | Monto del préstamo solicitado/otorgado (USD) | Sí |
-| `term` | Plazo del préstamo (36 o 60 meses) | Sí |
-| `int_rate` | Tasa de interés anual asignada | Sí, pero se evalúa con cuidado [ver sección 8] |
-| `installment` | Cuota mensual del préstamo | Sí |
-| `grade` | Calificación de riesgo asignada por Lending Club (A–G) | Sí, pero se evalúa con cuidado [ver sección 8] |
-| `sub_grade` | Sub-calificación de riesgo (A1–G5, 35 valores) | Sí, pero se evalúa con cuidado [ver sección 8] |
-| `emp_length` | Años de antigüedad laboral del solicitante | Sí |
-| `home_ownership` | Situación de vivienda (RENT, OWN, MORTGAGE, OTHER) | Sí |
-| `annual_inc` | Ingreso anual autodeclarado | Sí |
-| `purpose` | Motivo declarado del préstamo | Sí |
-| `dti` | Ratio deuda/ingreso mensual (sin hipoteca ni este préstamo) | Sí |
-| `fico_range_low` / `fico_range_high` | Rango del puntaje crediticio FICO | Sí |
-| `earliest_cr_line` (→ antigüedad crediticia) | Fecha de la primera línea de crédito del solicitante | Sí, transformada a antigüedad |
-| `open_acc` | Número de líneas de crédito actualmente abiertas | Sí |
-| `revol_util` | % de uso del crédito revolvente respecto al límite disponible | Sí |
-| `total_acc` | Número total de líneas de crédito que ha tenido (abiertas o cerradas) | Sí |
-| `issue_d` | Fecha de originación del préstamo (usada para el split temporal, no como feature) | Sí, uso auxiliar |
+## 10. Plan de validación
+**Partición temporal (out-of-time)** por `issue_d`: entrenamiento con los
+préstamos más antiguos, validación con el ~20% más reciente. Evita el leakage
+temporal de un split aleatorio y refleja el uso real (predecir préstamos
+futuros con un modelo entrenado en el pasado). La exploración confirma esta
+necesidad: la tasa de default sube de ~20% (train, préstamos antiguos) a 26.5%
+(validación, préstamos recientes), señal de **deriva temporal**. Para la entrega
+final se añadirá
+validación cruzada temporal (`TimeSeriesSplit`) para la búsqueda de
+hiperparámetros, dejando el bloque más reciente como test intocado.
 
----
+## 11. Modelo baseline
+Dos referencias honestas:
+- **Baseline trivial:** `DummyClassifier(strategy="prior")` (predice la tasa
+  base) — piso de comparación.
+- **Baseline real: Regresión logística sin balanceo ni tuning** sobre las
+  features de originación, dentro de un pipeline con imputación + escalado +
+  one-hot. Resultado en validación out-of-time: **ROC-AUC ≈ 0.696**,
+  **PR-AUC ≈ 0.43**, **KS ≈ 0.29** (vs. ROC-AUC 0.5 de la referencia trivial).
+  Al umbral 0.5 el **recall es bajo (~6%)**: sin balanceo el modelo casi no
+  marca defaults, lo que motiva ajustar el umbral y probar balanceo/resampling
+  en la fase de modelado.
 
-# 8. Riesgos de leakage
+## 12. Riesgos técnicos
+- **Desbalance de clases** (~20% de default en train, 26.5% en la validación
+  out-of-time más reciente): se usan métricas apropiadas (no accuracy). El
+  baseline es sin balanceo; el manejo del desbalance (`class_weight` /
+  resampling / ajuste de umbral) se aborda en la fase de modelado.
+- **Alto volumen** (2.26M filas): se trabaja sobre una muestra aleatoria
+  representativa (40%) leída por chunks y solo con las columnas necesarias; el
+  muestreo es reproducible (semilla) y está documentado.
+- **Faltantes no aleatorios:** columnas como `mths_since_last_delinq` faltan
+  cuando *no hubo* morosidad → la ausencia es informativa; se evalúa un
+  indicador de faltante.
+- **Alta cardinalidad** (`emp_title`, `addr_state`): se excluye o agrupa.
+- **Deriva temporal:** las políticas de crédito de LC cambiaron entre 2007–2018;
+  la validación out-of-time lo hace explícito.
 
-# 8. Riesgos de leakage
-
-| Variable | Por qué es leakage | Medida de control |
-|----------|--------------------|--------------------|
-| `total_pymnt` | Se calcula a partir de los pagos ya realizados por el prestatario, información que no existe al momento de aprobar el préstamo | Excluida del conjunto de features |
-| `total_rec_prncp` | Es el capital ya pagado; solo se conoce después del desembolso | Excluida del conjunto de features |
-| `total_rec_int` | Son los intereses ya pagados; solo se conoce después del desembolso | Excluida del conjunto de features |
-| `recoveries` | Solo tiene valor distinto de cero si el préstamo ya entró en default — filtra directamente el resultado que se quiere predecir | Excluida del conjunto de features |
-| `last_pymnt_d` | Fecha del último pago realizado; no existe al momento de originar el préstamo | Excluida del conjunto de features |
-
----
-
-# 9. Métricas (falta cambiar plantilla)
-
-- **Métrica principal:** AUC-ROC — apropiada para el desbalance de clases y para comparar la capacidad de ranking de riesgo entre modelos
-- **Métrica secundaria:** AUC-PR (Precision-Recall) — más informativa que accuracy dado que la clase de interés (default) es minoritaria
-
----
-
-# 10. Plan de validación
-
-- **Partición:** entrenamiento con préstamos originados en los primeros años 
-  disponibles (2007–2015); validación y test con los periodos más 
-  recientes (2016–2018), para simular el escenario real de producción.
-- **Tipo de validación:** split temporal, con validación cruzada temporal 
-  (ventanas móviles) sobre el set de entrenamiento para ajustar el modelo.
-- **Regla:** el conjunto de test no se usa para tomar decisiones de modelado.
-- **Semilla aleatoria:** 42
-
----
-
-# 11. Modelo baseline(falta cambiar plantilla)
-
-1. **Baseline trivial:** predecir siempre la clase mayoritaria (buen desempeño).
-2. **Baseline logístico:** regresión logística con variables numéricas estandarizadas y categóricas codificadas (one-hot / target encoding según cardinalidad), sin balanceo de clases ni tuning.
-
-Resultados esperados de la entrega previa: AUC-ROC y AUC-PR de ambos baselines, con una lectura corta de qué significan.
-
----
-
-# 12. Riesgos técnicos(falta cambiar plantilla)
-
-| Riesgo | Impacto | Mitigación |
-|--------|---------|------------|
-| Alta cardinalidad en categóricas (`purpose`, `sub_grade`, códigos postales) | Explosión de columnas al hacer one-hot | [target encoding, agrupar categorías poco frecuentes] |
-| Volumen de datos grande | Notebook lento o memoria insuficiente | [muestreo, dtypes eficientes, procesamiento por lotes] |
-| Desbalance de clases | Métricas engañosas si solo se mira accuracy | [usar AUC-ROC/AUC-PR, class weights o resampling] |
-| Valores faltantes no aleatorios (missing not at random) en variables financieras | Sesgo si se imputa sin cuidado | [documentar patrón de faltantes, imputación justificada] |
-| Cambios en políticas de originación de Lending Club a lo largo del tiempo | Drift entre periodos | [análisis de errores por año/segmento] |
-| [otro] | | |
-
-**Sesgos y limitaciones iniciales:** el dataset refleja únicamente solicitantes aprobados por Lending Club (no rechazados), lo que introduce sesgo de selección; los resultados no necesariamente generalizan a otras plataformas de crédito.
-
----
-
-# 13. Plan de trabajo (falta cambiar plantilla)
-
-| Semana | Actividad | Responsable |
-|--------|-----------|-------------|
-| 2–3 | Limpieza de datos, tratamiento de faltantes, definición final de variables (`02_limpieza_features.ipynb`, `src/features.py`) | |
-| 4–5 | Pipeline de preprocesamiento reproducible + baseline (regresión logística) | |
-| 6–8 | Modelos: logística regularizada, árboles/Random Forest, Gradient Boosting | |
-| 9–10 | Búsqueda de hiperparámetros y validación temporal robusta | |
-| 11–12 | Análisis de errores por segmento (grade, ingresos, propósito) e interpretabilidad (SHAP) | |
-| 13–14 | Informe final (`reports/informe_final.md`) | |
-| 15 | Presentación y revisión del README | |
-| 16 | Entrega final | |
-
-<!-- Ajusten las semanas según el cronograma real del curso. -->
-
----
-├── reports/
-│   └── figures/
-└── outputs/
-```
+## 13. Plan de trabajo (semanas restantes)
+| Semana | Actividad |
+|---|---|
+| 2 | Limpieza completa, tratamiento formal de faltantes/outliers, feature engineering (`02_limpieza_features.ipynb`). |
+| 3 | Modelos comparables: regresión logística regularizada, árboles/Random Forest y gradient boosting (`03_modelos.ipynb`). |
+| 4 | Búsqueda de hiperparámetros con validación temporal; selección de modelo. |
+| 5 | Análisis de errores por segmentos, interpretabilidad y sesgos (`04_analisis_errores.ipynb`). |
+| 6 | Informe final, figuras, presentación y verificación de reproducibilidad. |
