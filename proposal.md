@@ -1,21 +1,13 @@
 # Propuesta de proyecto — Entrega previa
 
-> **Nota:** Las cifras (filas, tasa de default, métricas del baseline) provienen
-> de una corrida real sobre una muestra aleatoria del 40% del dataset, ejecutada
-> en `notebooks/01_exploracion_inicial.ipynb` y guardada en `outputs/metrics.json`.
-> Falta completar los **nombres de los integrantes** (punto 2).
-
 ## 1. Título del proyecto
 **Predicción de incumplimiento de préstamos personales en Lending Club usando
 únicamente información disponible al momento de la decisión crediticia.**
 
 ## 2. Integrantes
-- Abigail Jaslin Cabanillas Ventocilla | 202510438 
-- Mia Alexie Wood De la fuente chavez | 202410085
+- Abigail Jaslin Cabanillas Ventocilla | 202510438
+- Mia Alexie Wood De la Fuente Chávez | 202410085
 - Mia Dayhana Hurtado Vite | 202410245
--
-
-*(Reemplazar por los integrantes reales del equipo.)*
 
 ## 3. Dataset elegido
 **Lending Club Loan Data** — préstamos personales originados entre 2007 y 2018.
@@ -23,34 +15,37 @@
 - **Fuente:** Lending Club, distribuida vía Kaggle
   (`wordsforthewise/lending-club`, archivo `accepted_2007_to_2018Q4.csv`).
 - **Tamaño:** 2 260 701 préstamos y 151 columnas en el archivo completo. Para la
-  exploración inicial se trabajó con una **muestra aleatoria reproducible del
-  40%**; tras filtrar a préstamos con resultado observado quedan **547 578
-  préstamos** (442 948 train / 104 630 validación out-of-time).
+  exploración inicial se trabajó con una **muestra aleatoria reproducible del 8%**
+  (semilla 42): **163 818 préstamos** cargados. Tras filtrar a préstamos con
+  resultado observado quedan **102 159 préstamos** (80 746 train, de 2007-06 a
+  2016-06 / 21 413 validación out-of-time, de 2016-07 a 2018-12).
 - **Licencia / acceso:** datos públicos publicados por Lending Club; el mirror
   de Kaggle requiere una cuenta gratuita. No hay restricciones de uso académico.
 - **Complejidad (por qué califica):** cumple varias de las condiciones exigidas
   — >50 000 filas, >50 variables, variables temporales (fechas de emisión y de
-  historial crediticio), fuerte **desbalance de clases**, abundantes **valores
-  faltantes**, columnas de texto libre de alta cardinalidad (`emp_title`,
-  `title`) y un **riesgo de leakage severo y realista** que es el corazón del
-  ejercicio.
+  historial crediticio), **desbalance de clases**, **valores faltantes**, columnas
+  de texto libre de alta cardinalidad (`emp_title`, `title`) y un **riesgo de
+  leakage severo y realista** que es el corazón del ejercicio.
 
 ## 4. Pregunta predictiva
 Dado un solicitante y las condiciones del préstamo **en el momento en que
 Lending Club debe decidir si aprueba y a qué tasa**, ¿el préstamo terminará en
+
 **incumplimiento / mal desempeño** (Charged Off, Default, mora tardía) en lugar
 de ser pagado por completo?
 
 Es un problema de **clasificación binaria supervisada**.
 
 ## 5. Variable objetivo
-`target_default` ∈ {0, 1}, derivada de `loan_status`:
+`mal_desempeno` ∈ {0, 1}, derivada de `loan_status`:
 
 - **1 (evento positivo, "malo"):** `Charged Off`, `Default`,
-  `Late (31-120 days)` y sus variantes "Does not meet the credit policy…".
-- **0 ("bueno"):** `Fully Paid` y su variante de política.
+  `Late (31-120 days)` y la variante "Does not meet the credit policy. Status:Charged Off".
+- **0 ("bueno"):** `Fully Paid` y la variante "Does not meet the credit policy. Status:Fully Paid".
 - **Excluidos:** `Current`, `In Grace Period`, `Late (16-30 days)`, `Issued` —
   su resultado **aún no es observable**, por lo que etiquetarlos sería incorrecto.
+
+En la muestra: **78.95%** buenos y **21.05%** malos.
 
 ## 6. Unidad de predicción
 **Un préstamo individual** en el instante de su solicitud/originación. Cada fila
@@ -58,17 +53,19 @@ Es un problema de **clasificación binaria supervisada**.
 préstamo a lo largo de su vida.
 
 ## 7. Variables disponibles antes de la predicción
-Solo se usan variables conocidas en la **originación** (lista blanca en
-`src/features.py`). Ejemplos:
+Solo se usan variables conocidas en la **originación** (lista blanca
+`columnas_utiles` en el notebook). Ejemplos:
 
 - **Solicitud/préstamo:** `loan_amnt`, `term`, `int_rate`, `installment`,
   `grade`, `sub_grade`, `purpose`, `application_type`, `initial_list_status`.
 - **Solicitante:** `annual_inc`, `emp_length`, `home_ownership`,
-  `verification_status`, `addr_state`, `dti`.
+  `verification_status`, `dti` (`addr_state` también está disponible, pero se
+  excluye del baseline por su alta cardinalidad).
 - **Historial de buró al originar:** `fico_range_low/high`, `delinq_2yrs`,
   `inq_last_6mths`, `open_acc`, `pub_rec`, `revol_bal`, `revol_util`,
+
   `total_acc`, `pub_rec_bankruptcies`, `earliest_cr_line`
-  (→ antigüedad crediticia).
+  (→ antigüedad crediticia en meses).
 
 `int_rate`, `grade` y `sub_grade` **sí** son válidas: Lending Club las asigna en
 la originación, antes de fondear, por lo que están disponibles en la decisión.
@@ -87,8 +84,9 @@ de otorgar el crédito y filtrarían el resultado:
 - **Fondeo:** `funded_amnt`, `funded_amnt_inv` (posteriores a la aprobación; se
   usa `loan_amnt` en su lugar).
 
-**Control:** lista blanca explícita de features de originación + lista negra
-documentada (`LEAKAGE_COLUMNS`). Toda imputación/escalado se ajusta **solo con
+**Control:** la carga usa solo una lista blanca de columnas de originación, así
+que las variables de leakage no entran al análisis; `src/features.py` documenta
+la lista negra (`LEAKAGE_COLUMNS`). Toda imputación/escalado se ajusta **solo con
 train** dentro de un `Pipeline`.
 
 ## 9. Métrica principal y métrica secundaria
@@ -97,17 +95,17 @@ train** dentro de un `Pipeline`.
 - **Secundarias: PR-AUC (average precision)** y **estadístico KS**, ambas
   sensibles al desempeño sobre la clase minoritaria (los malos), más
   informativas que accuracy. Se reportan además precision/recall a un umbral
-  operativo. **No** se usará accuracy como métrica principal (penalizado).
+  operativo. **No** se usará accuracy como métrica principal.
+
 
 ## 10. Plan de validación
 **Partición temporal (out-of-time)** por `issue_d`: entrenamiento con los
-préstamos más antiguos, validación con el ~20% más reciente. Evita el leakage
-temporal de un split aleatorio y refleja el uso real (predecir préstamos
-futuros con un modelo entrenado en el pasado). La exploración confirma esta
-necesidad: la tasa de default sube de ~20% (train, préstamos antiguos) a 26.5%
-(validación, préstamos recientes), señal de **deriva temporal**. Para la entrega
-final se añadirá
-validación cruzada temporal (`TimeSeriesSplit`) para la búsqueda de
+préstamos más antiguos (2007-06 a 2016-06), validación con el ~20% más reciente
+(2016-07 a 2018-12). Evita el leakage temporal de un split aleatorio y refleja el
+uso real (predecir préstamos futuros con un modelo entrenado en el pasado). La
+exploración confirma esta necesidad: la tasa de default sube de **19.4%** (train)
+a **27.2%** (validación), señal de **deriva temporal**. Para la entrega final se
+añadirá validación cruzada temporal (`TimeSeriesSplit`) para la búsqueda de
 hiperparámetros, dejando el bloque más reciente como test intocado.
 
 ## 11. Modelo baseline
@@ -116,25 +114,28 @@ Dos referencias honestas:
   base) — piso de comparación.
 - **Baseline real: Regresión logística sin balanceo ni tuning** sobre las
   features de originación, dentro de un pipeline con imputación + escalado +
-  one-hot. Resultado en validación out-of-time: **ROC-AUC ≈ 0.696**,
-  **PR-AUC ≈ 0.43**, **KS ≈ 0.29** (vs. ROC-AUC 0.5 de la referencia trivial).
-  Al umbral 0.5 el **recall es bajo (~6%)**: sin balanceo el modelo casi no
-  marca defaults, lo que motiva ajustar el umbral y probar balanceo/resampling
-  en la fase de modelado.
+  one-hot. Resultado en validación out-of-time: **ROC-AUC ≈ 0.687**,
+  **PR-AUC ≈ 0.430**, **KS ≈ 0.271** (vs. ROC-AUC 0.5 y PR-AUC 0.272 de la
+  referencia trivial). Al umbral 0.5 el **recall es muy bajo (~2.4%)**: sin
+  balanceo el modelo casi no marca defaults, lo que motiva ajustar el umbral y
+  probar balanceo/resampling en la fase de modelado.
 
 ## 12. Riesgos técnicos
-- **Desbalance de clases** (~20% de default en train, 26.5% en la validación
-  out-of-time más reciente): se usan métricas apropiadas (no accuracy). El
-  baseline es sin balanceo; el manejo del desbalance (`class_weight` /
-  resampling / ajuste de umbral) se aborda en la fase de modelado.
-- **Alto volumen** (2.26M filas): se trabaja sobre una muestra aleatoria
-  representativa (40%) leída por chunks y solo con las columnas necesarias; el
-  muestreo es reproducible (semilla) y está documentado.
-- **Faltantes no aleatorios:** columnas como `mths_since_last_delinq` faltan
-  cuando *no hubo* morosidad → la ausencia es informativa; se evalúa un
-  indicador de faltante.
+- **Desbalance de clases** (19.4% de default en train, 27.2% en la validación
+  out-of-time): se usan métricas apropiadas (no accuracy). El baseline es sin
+  balanceo; el manejo del desbalance (`class_weight` / resampling / ajuste de
+  umbral) se aborda en la fase de modelado.
+- **Alto volumen** (2.26M filas, ~1.6 GB): se trabaja sobre una muestra aleatoria
+  representativa (8%), leída saltando filas al azar y solo con las columnas
+  necesarias; el muestreo es reproducible (semilla 42) y está documentado.
+- **Faltantes:** `emp_length` tiene 6.4% de faltantes; el resto, menos de 0.1%.
+
+  Para la entrega final se evaluarán columnas como `mths_since_last_delinq`, cuya
+  ausencia es informativa (falta cuando *no hubo* morosidad).
+- **Outliers:** ingresos autodeclarados extremos (hasta 6.5M) y `dti` imposibles
+  (hasta 999); se recortarán con umbrales ajustados solo con train.
 - **Alta cardinalidad** (`emp_title`, `addr_state`): se excluye o agrupa.
-- **Deriva temporal:** las políticas de crédito de LC cambiaron entre 2007–2018;
+- **Deriva temporal:** las políticas de crédito de LC cambiaron entre 2007 y 2018;
   la validación out-of-time lo hace explícito.
 
 ## 13. Plan de trabajo (semanas restantes)
