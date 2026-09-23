@@ -11,30 +11,6 @@ momento de la decisión crediticia (control estricto de *leakage*).
 - **Validación:** partición temporal (out-of-time) por `issue_d`.
 - **Baseline:** clase mayoritaria + regresión logística con `class_weight`.
 
-Ver `proposal.md` para la propuesta completa (13 puntos).
-
-## Estructura
-
-```
-proyecto-final/
-├── README.md
-├── proposal.md
-├── requirements.txt
-├── data/                     # datos (no versionados) + instrucciones
-│   └── README.md
-├── notebooks/
-│   └── 01_exploracion_inicial.ipynb
-├── src/
-│   ├── config.py             # rutas, semilla, definición del target
-│   ├── data.py               # carga y construcción del target
-│   ├── features.py           # lista blanca sin leakage + preprocesamiento
-│   ├── train.py              # partición temporal + baselines
-│   └── evaluate.py           # métricas (ROC-AUC, PR-AUC, KS, ...)
-├── reports/figures/          # figuras generadas por el notebook
-└── outputs/
-    └── metrics.json          # métricas del baseline (generado)
-```
-
 ## Reproducir la exploración
 
 Requiere Python 3.11.
@@ -49,9 +25,6 @@ pip install -r requirements.txt
 
 # 3a. Baseline por línea de comandos (genera outputs/metrics.json)
 python -m src.train --data data/accepted_2007_to_2018Q4.csv
-
-#     (opcional) muestra rápida para probar:
-python -m src.train --data data/accepted_2007_to_2018Q4.csv --nrows 300000
 
 # 3b. Exploración completa (figuras + baseline)
 jupyter notebook notebooks/01_exploracion_inicial.ipynb
