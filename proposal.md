@@ -4,7 +4,7 @@
 **Predicción de incumplimiento de préstamos personales en Lending Club usando
 únicamente información disponible al momento de la decisión crediticia.**
 
-## 2. Integrantes
+## 2. Integrantes Grupo 4
 - Abigail Jaslin Cabanillas Ventocilla | 202510438
 - Mia Alexie Wood De la Fuente Chávez | 202410085
 - Mia Dayhana Hurtado Vite | 202410245
