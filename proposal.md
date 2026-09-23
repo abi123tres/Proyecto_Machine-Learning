@@ -8,6 +8,7 @@
 - Abigail Jaslin Cabanillas Ventocilla | 202510438
 - Mia Alexie Wood De la Fuente Chávez | 202410085
 - Mia Dayhana Hurtado Vite | 202410245
+- Yudit Margot Poma Quispe | 202120448
 
 ## 3. Dataset elegido
 **Lending Club Loan Data** — préstamos personales originados entre 2007 y 2018.
