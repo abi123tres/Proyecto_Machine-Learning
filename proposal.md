@@ -136,11 +136,3 @@ Dos referencias honestas:
 - **Deriva temporal:** las políticas de crédito de LC cambiaron entre 2007–2018;
   la validación out-of-time lo hace explícito.
 
-## 13. Plan de trabajo (semanas restantes)
-| Semana | Actividad |
-|---|---|
-| 2 | Limpieza completa, tratamiento formal de faltantes/outliers, feature engineering (`02_limpieza_features.ipynb`). |
-| 3 | Modelos comparables: regresión logística regularizada, árboles/Random Forest y gradient boosting (`03_modelos.ipynb`). |
-| 4 | Búsqueda de hiperparámetros con validación temporal; selección de modelo. |
-| 5 | Análisis de errores por segmentos, interpretabilidad y sesgos (`04_analisis_errores.ipynb`). |
-| 6 | Informe final, figuras, presentación y verificación de reproducibilidad. |
