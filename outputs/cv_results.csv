@@ -1,0 +1,6 @@
+model,cv_roc_auc_mean,cv_roc_auc_std,best_params,search_seconds
+dummy_prior,0.5,0.0,{},4.1
+logreg_baseline,0.7181535235761884,0.013360543536370787,{},5.9
+logreg_tuned,0.7185661020182585,0.013422560151078398,"{'C': 0.01, 'class_weight': 'balanced'}",40.7
+random_forest,0.7184208651834874,0.01402972281963435,"{'min_samples_leaf': 20, 'max_features': 'sqrt', 'max_depth': 18, 'class_weight': 'balanced_subsample'}",218.2
+hist_gradient_boosting,0.7194121491625143,0.014099791645672068,"{'min_samples_leaf': 1000, 'max_leaf_nodes': 15, 'learning_rate': 0.03, 'l2_regularization': 1.0, 'class_weight': None}",291.8

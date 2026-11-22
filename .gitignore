@@ -1,0 +1,15 @@
+# Datos crudos y procesados (ver data/README.md para descargarlos)
+data/*.csv
+data/*.csv.gz
+data/processed/
+
+# Artefactos regenerables con `python -m src.train`
+outputs/models/
+outputs/quick/
+outputs/predictions_test.parquet
+
+# Python / Jupyter / SO
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+.venv/

@@ -1,0 +1,25 @@
+model,params,cv_roc_auc_mean,cv_roc_auc_std
+dummy_prior,{},0.5,0.0
+logreg_baseline,{},0.7181535235761884,0.013360543536370787
+logreg_tuned,"{""clf__C"": 0.01, ""clf__class_weight"": null}",0.7184763758346348,0.01331843975862793
+logreg_tuned,"{""clf__C"": 0.01, ""clf__class_weight"": ""balanced""}",0.7185661020182585,0.013422560151078398
+logreg_tuned,"{""clf__C"": 0.1, ""clf__class_weight"": null}",0.7182490614640764,0.013362851063121657
+logreg_tuned,"{""clf__C"": 0.1, ""clf__class_weight"": ""balanced""}",0.7182552677711551,0.013483953204470751
+logreg_tuned,"{""clf__C"": 1.0, ""clf__class_weight"": null}",0.7181535235761884,0.013360543536370787
+logreg_tuned,"{""clf__C"": 1.0, ""clf__class_weight"": ""balanced""}",0.718203868253114,0.013546890199575744
+random_forest,"{""clf__min_samples_leaf"": 300, ""clf__max_features"": 0.33, ""clf__max_depth"": 18, ""clf__class_weight"": ""balanced_subsample""}",0.7156750651472498,0.013802523886815844
+random_forest,"{""clf__min_samples_leaf"": 100, ""clf__max_features"": ""sqrt"", ""clf__max_depth"": 18, ""clf__class_weight"": null}",0.7175844202817012,0.013840951483366577
+random_forest,"{""clf__min_samples_leaf"": 300, ""clf__max_features"": ""sqrt"", ""clf__max_depth"": 14, ""clf__class_weight"": ""balanced_subsample""}",0.7156464649029644,0.013711687871841525
+random_forest,"{""clf__min_samples_leaf"": 20, ""clf__max_features"": ""sqrt"", ""clf__max_depth"": 18, ""clf__class_weight"": ""balanced_subsample""}",0.7184208651834874,0.01402972281963435
+random_forest,"{""clf__min_samples_leaf"": 100, ""clf__max_features"": 0.33, ""clf__max_depth"": 18, ""clf__class_weight"": null}",0.7175295816066929,0.013994150403047337
+random_forest,"{""clf__min_samples_leaf"": 100, ""clf__max_features"": ""sqrt"", ""clf__max_depth"": 18, ""clf__class_weight"": ""balanced_subsample""}",0.7176285393025654,0.013573299472865495
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 1000, ""clf__max_leaf_nodes"": 31, ""clf__learning_rate"": 0.1, ""clf__l2_regularization"": 10.0, ""clf__class_weight"": ""balanced""}",0.7177220481477555,0.014325312743555028
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 300, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.03, ""clf__l2_regularization"": 1.0, ""clf__class_weight"": ""balanced""}",0.7192091410795636,0.014037298908913146
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 1000, ""clf__max_leaf_nodes"": 31, ""clf__learning_rate"": 0.1, ""clf__l2_regularization"": 1.0, ""clf__class_weight"": ""balanced""}",0.7177139543636731,0.014565587259937443
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 300, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.03, ""clf__l2_regularization"": 10.0, ""clf__class_weight"": null}",0.7192513259091464,0.014028668896804663
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 300, ""clf__max_leaf_nodes"": 31, ""clf__learning_rate"": 0.06, ""clf__l2_regularization"": 0.0, ""clf__class_weight"": ""balanced""}",0.7185201700238902,0.014377553096611309
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 1000, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.03, ""clf__l2_regularization"": 1.0, ""clf__class_weight"": null}",0.7194121491625143,0.014099791645672068
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 1000, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.1, ""clf__l2_regularization"": 0.0, ""clf__class_weight"": ""balanced""}",0.7193523874883475,0.014011492589660078
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 100, ""clf__max_leaf_nodes"": 63, ""clf__learning_rate"": 0.1, ""clf__l2_regularization"": 1.0, ""clf__class_weight"": null}",0.7161012053716476,0.015067671531165908
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 300, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.1, ""clf__l2_regularization"": 0.0, ""clf__class_weight"": ""balanced""}",0.7185159572049199,0.014256027699367945
+hist_gradient_boosting,"{""clf__min_samples_leaf"": 100, ""clf__max_leaf_nodes"": 15, ""clf__learning_rate"": 0.06, ""clf__l2_regularization"": 10.0, ""clf__class_weight"": ""balanced""}",0.7190846582491986,0.01394017482944927
